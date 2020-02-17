@@ -1,8 +1,8 @@
-
-
 import argparse
 import logging
 import math
+
+import piglow
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
@@ -13,6 +13,8 @@ FORMAT = '%(asctime)-15s %(message)s'
 logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('IMU')
 logger.setLevel(logging.INFO)
+
+last_change = 0
 
 def mapFromTo(x, a, b, c, d):
    y = (x - a) / (b - a) * (d - c) + c
