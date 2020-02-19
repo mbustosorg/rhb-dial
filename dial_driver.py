@@ -23,7 +23,7 @@ def mapFromTo(x, a, b, c, d):
 def handle_pressure(unused_addr, args):
     try:
         logger.info(f'[{args}]')
-        pwm.setServoPulse(0, int(mapFromTo(args, -15000, 15000, 500, 2500)))
+        pwm.setServoPulse(15, int(mapFromTo(args, -15000, 15000, 500, 2500)))
     except ValueError as e:
         logger.error(e)
         
