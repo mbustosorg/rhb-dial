@@ -1,3 +1,17 @@
+"""
+    Copyright (C) 2020 Mauricio Bustos (m@bustos.org)
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 import argparse
 import logging
 import math
@@ -17,10 +31,12 @@ logger.setLevel(logging.INFO)
 last_change = 0
 
 def mapFromTo(x, a, b, c, d):
+   """ Map coordinates """
    y = (x - a) / (b - a) * (d - c) + c
    return y
 
 def handle_pressure(unused_addr, args):
+   """ Handle the update from the pressure sensor """
     try:
         logger.info(f'[{args}]')
         pwm.setServoPulse(15, int(mapFromTo(args, -15000, 15000, 500, 2500)))
