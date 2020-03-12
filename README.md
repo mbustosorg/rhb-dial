@@ -1,2 +1,2 @@
-Red Hot Beverly Dial Pressure Dial Control
+Red Hot Beverly Dial Pressure Control
 ==========================
