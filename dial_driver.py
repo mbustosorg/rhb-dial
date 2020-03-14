@@ -31,23 +31,27 @@ logger.setLevel(logging.INFO)
 
 last_change = 0
 
-def mapFromTo(x, a, b, c, d):
-   """ Map coordinates """
-   y = (x - a) / (b - a) * (d - c) + c
-   return y
+
+def map_from_to(x, a, b, c, d):
+    """ Map coordinates """
+    y = (x - a) / (b - a) * (d - c) + c
+    return y
+
 
 def handle_pressure(unused_addr, args):
-   """ Handle the update from the pressure sensor """
-   try:
-      logger.info(f'[{args}]')
-      pwm.setServoPulse(15, int(mapFromTo(args, -5000, 20000, 0, 3000)))
-   except ValueError as e:
-      logger.error(e)
+    """ Handle the update from the pressure sensor """
+    try:
+        logger.info(f'[{args}]')
+        pwm.set_servo_pulse(15, int(map_from_to(args, -5000, 20000, 0, 3000)))
+    except ValueError as e:
+        logger.error(e)
 
-      
+
 async def loop():
-   while True:
-      await asyncio.sleep(1)
+    while True:
+        await asyncio.sleep(1)
+
+
 """
    last_change = 0
    for i in range(10):
@@ -62,34 +66,28 @@ async def loop():
       await asyncio.sleep(1)
 """
 
-      
+
 async def init_main(args, dispatcher):
-   server = AsyncIOOSCUDPServer((args.ip, args.port), dispatcher, asyncio.get_event_loop())
-   transport, protocol = await server.create_serve_endpoint() 
-   
-   await loop()
-   
-   transport.close()
+    server = AsyncIOOSCUDPServer((args.ip, args.port), dispatcher, asyncio.get_event_loop())
+    transport, protocol = await server.create_serve_endpoint()
 
-   
+    await loop()
+
+    transport.close()
+
+
 if __name__ == "__main__":
-   pwm = PCA9685(0x40, debug=False)
-   pwm.setPWMFreq(50)
-   
-   parser = argparse.ArgumentParser()
-   parser.add_argument("--ip", default="10.0.1.58", help="The ip to listen on")
-   parser.add_argument("--port", type=int, default=10003, help="The port to listen on")
-   args = parser.parse_args()
-   
-   dispatcher = Dispatcher()
-   dispatcher.map("/pressure", handle_pressure)
-   
-   logger.info(f'Serving on {args.ip}')
-      
-   asyncio.run(init_main(args, dispatcher))
+    pwm = PCA9685(logger=logger)
+    pwm.set_pwm_freq(50)
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ip", default="10.0.1.58", help="The ip to listen on")
+    parser.add_argument("--port", type=int, default=10003, help="The port to listen on")
+    args = parser.parse_args()
 
-   
- 
+    dispatcher = Dispatcher()
+    dispatcher.map("/pressure", handle_pressure)
 
+    logger.info(f'Serving on {args.ip}')
 
+    asyncio.run(init_main(args, dispatcher))
