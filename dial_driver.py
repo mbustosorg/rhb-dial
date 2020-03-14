@@ -18,8 +18,9 @@ import math
 
 import piglow
 
-from pythonosc import dispatcher
-from pythonosc import osc_server
+from pythonosc.osc_server import AsyncIOOSCUDPServer
+from pythonosc.dispatcher import Dispatcher
+import asyncio
 
 from PCA9685 import PCA9685
 
@@ -39,10 +40,38 @@ def handle_pressure(unused_addr, args):
    """ Handle the update from the pressure sensor """
    try:
       logger.info(f'[{args}]')
-      pwm.setServoPulse(15, int(mapFromTo(args, -15000, 15000, 500, 2500)))
+      pwm.setServoPulse(15, int(mapFromTo(args, -5000, 20000, 0, 3000)))
    except ValueError as e:
       logger.error(e)
+
       
+async def loop():
+   while True:
+      await asyncio.sleep(1)
+"""
+   last_change = 0
+   for i in range(10):
+      if last_change == 0:
+         last_change = 1
+         piglow.red(64)
+      else:
+         last_change = 0
+         piglow.red(0)
+      piglow.show()
+      print(f"Loop {i}")
+      await asyncio.sleep(1)
+"""
+
+      
+async def init_main(args, dispatcher):
+   server = AsyncIOOSCUDPServer((args.ip, args.port), dispatcher, asyncio.get_event_loop())
+   transport, protocol = await server.create_serve_endpoint() 
+   
+   await loop()
+   
+   transport.close()
+
+   
 if __name__ == "__main__":
    pwm = PCA9685(0x40, debug=False)
    pwm.setPWMFreq(50)
@@ -52,11 +81,15 @@ if __name__ == "__main__":
    parser.add_argument("--port", type=int, default=10003, help="The port to listen on")
    args = parser.parse_args()
    
-   dispatcher = dispatcher.Dispatcher()
+   dispatcher = Dispatcher()
    dispatcher.map("/pressure", handle_pressure)
    
-   server = osc_server.ThreadingOSCUDPServer((args.ip, args.port), dispatcher)
-   logger.info(f'Serving on {server.server_address}')
-   server.serve_forever()
+   logger.info(f'Serving on {args.ip}')
+      
+   asyncio.run(init_main(args, dispatcher))
+
+
    
  
+
+
