@@ -42,7 +42,7 @@ def handle_pressure(unused_addr, args):
     """ Handle the update from the pressure sensor """
     try:
         logger.info(f'[{args}]')
-        pwm.set_servo_pulse(15, int(map_from_to(args, -5000, 20000, 0, 3000)))
+        pwm.set_servo_pulse(15, int(map_from_to(args, -5000, 12000, 0, 3000)))
     except ValueError as e:
         logger.error(e)
 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     pwm.set_pwm_freq(50)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ip", default="10.0.1.58", help="The ip to listen on")
+    parser.add_argument("--ip", default="10.0.1.32", help="The ip to listen on")
     parser.add_argument("--port", type=int, default=10003, help="The port to listen on")
     args = parser.parse_args()
 
