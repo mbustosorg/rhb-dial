@@ -15,9 +15,11 @@
 import argparse
 import logging
 
-import piglow
+import time
 
 from pythonosc.osc_server import AsyncIOOSCUDPServer
+from pythonosc import udp_client
+from pythonosc import osc_message_builder
 from pythonosc.dispatcher import Dispatcher
 import asyncio
 
@@ -37,33 +39,30 @@ def map_from_to(x, a, b, c, d):
     return y
 
 
+def loop_needle():
+    pwm.set_servo_pulse(15, 10)
+    return
+
+
 def handle_pressure(unused_addr, args):
     """ Handle the update from the pressure sensor """
     try:
-        logger.info(f'[{args}]')
-        pwm.set_servo_pulse(15, int(map_from_to(args, -5000, 12000, 0, 3000)))
+        logger.info(f'[{int(args)}]')
+        #pwm.set_servo_pulse(15, int(map_from_to(args, -5000, 12000, 500, 2500)))
+        pwm.set_servo_pulse(15, int(args))
     except ValueError as e:
         logger.error(e)
 
 
 async def loop():
+    tick = 1
     while True:
+        msg = osc_message_builder.OscMessageBuilder(address="/tick")
+        msg.add_arg(tick)
+        built = msg.build()
+        mobile_client.send(built)
+        tick = tick + 1
         await asyncio.sleep(1)
-
-
-"""
-   last_change = 0
-   for i in range(10):
-      if last_change == 0:
-         last_change = 1
-         piglow.red(64)
-      else:
-         last_change = 0
-         piglow.red(0)
-      piglow.show()
-      print(f"Loop {i}")
-      await asyncio.sleep(1)
-"""
 
 
 async def init_main(args, dispatcher):
@@ -78,11 +77,23 @@ async def init_main(args, dispatcher):
 if __name__ == "__main__":
     pwm = PCA9685(logger=logger)
     pwm.set_pwm_freq(50)
+    for i in range(2):
+        pwm.set_servo_pulse(0, 500)
+        time.sleep(0.1)
+        for i in range(500, 2500, 10):
+            time.sleep(0.01)
+            pwm.set_servo_pulse(0, i)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ip", default="10.0.1.32", help="The ip to listen on")
-    parser.add_argument("--port", type=int, default=10003, help="The port to listen on")
+    parser.add_argument("--ip", default="192.168.1.4", help="The ip to listen on")
+    parser.add_argument("--port", type=int, default=8888, help="The port to listen on")
+    parser.add_argument('--mobile_ip', default='192.168.1.5',
+                        help='The ip of the mobile osc display')
+    parser.add_argument('--mobile_port', type=int, default=8888,
+                        help='The port the mobile osc display is listening on')
     args = parser.parse_args()
+
+    mobile_client = udp_client.UDPClient(args.mobile_ip, args.mobile_port)
 
     dispatcher = Dispatcher()
     dispatcher.map("/pressure", handle_pressure)
